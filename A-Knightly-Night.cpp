@@ -52,7 +52,6 @@ public:
 struct Node {
     ivec2 value;
     int parent;
-    int children[8];
 };
 
 const std::vector<ivec2> deltas = {
