@@ -15,11 +15,6 @@ Gib Pseudocode für einen möglichst effizienten rekursiven Algorithmus, der all
 Touren für gegebenes n und m findet, an.
 */
 
-// Implementation tweaks:
-// The algorithm is iterative instead of recursive which saves me from stack overflows
-// A recursive algorithm might have been simpler to write idk but I didn't even notice that keyword
-// when solving this problem
-
 #include <vector>
 #include <iostream>
 #include <string>
@@ -49,11 +44,6 @@ public:
     }
 };
 
-struct Node {
-    ivec2 value;
-    int parent;
-};
-
 const std::vector<ivec2> deltas = {
     ivec2(1,2),
     ivec2(-1,2),
@@ -64,24 +54,39 @@ const std::vector<ivec2> deltas = {
     ivec2(2,-1),
     ivec2(-2,-1)
 };
-std::vector<Node> nodes;
-std::vector<std::vector<ivec2>> paths;
+
 unsigned int n;
 unsigned int m;
+unsigned int** board;
+ivec2* path;
 
-bool isValid(Node node, ivec2 step) {
-    ivec2 u = node.value;
-    ivec2 h = u+step;
-    if(h.x <= 0 || h.y <= 0) return false;
-    if(h.x > n || h.y > m) return false;
-    Node last = node;
-    do {
-        if (h == last.value) return false;
-        if (last.parent > -1) {
-            last = nodes[last.parent];
+inline bool inBounds(ivec2 step) {
+    return (step.x >= 0 && step.x < n && step.y >= 0 && step.y < m);
+}
+
+void knight(ivec2 pos, int depth) {
+    board[pos.x][pos.y] = depth;
+    if(depth == n*m - 1) {
+        for(int x = 0; x < n; ++x) {
+            for(int y = 0; y < m; ++y) {
+                path[board[x][y]] = ivec2(x,y);
+            }
         }
-    } while (last.value != ivec2(1,1));
-    return h != last.value;
+        std::cout << "<";
+        for(int i = 0; i < n*m; ++i) {
+            std::cout << "(" << path[i].x+1 << "," << path[i].y+1 << ")";
+        }
+        std::cout << ">" << std::endl;
+    }
+    for(const auto& delta : deltas) {
+        ivec2 next = pos+delta;
+        if(inBounds(next)) {
+            if(board[next.x][next.y] == -1) {
+                knight(next, depth+1);
+            }
+        }
+    }
+    board[pos.x][pos.y] = -1;
 }
 
 int main(int argc, char* argv[]) {
@@ -92,52 +97,15 @@ int main(int argc, char* argv[]) {
 
     n = std::stoul(argv[1]);
     m = std::stoul(argv[2]);
-
-    Node root{};
-    root.value = ivec2(1,1);
-    root.parent = -1;
-    nodes.push_back(root);
     
-    int lastleaf = 0;
-    for(int i = 0; i < n*m; ++i) {
-        int round = 0;
-        int end = nodes.size();
-        for(int leaf = lastleaf; leaf < end; ++leaf) {
-            for(const auto& delta : deltas) {
-                if(isValid(nodes[leaf], delta)) {
-                    Node n{};
-                    n.parent = leaf;
-                    n.value = nodes[leaf].value + delta;
-                    nodes.push_back(n);
-                    round++;
-                }
-            }
+    board = new unsigned int*[n];
+    for(int i = 0; i < n; ++i) {
+        board[i] = new unsigned int[m];
+        for(int j = 0; j < m; ++j) {
+            board[i][j] = -1;
         }
-        if(round == 0) break;
-        lastleaf = (nodes.size()-1)-round;
     }
+    path = new ivec2[n*m];
 
-    for(int leaf = lastleaf; leaf < nodes.size(); ++leaf) {
-        std::vector<ivec2> path;
-        Node last = nodes[leaf];
-        if(last.value == ivec2(1,1)) break;
-        do {
-            path.push_back(last.value);
-            if(last.parent > -1) {
-                last = nodes[last.parent];
-            }
-        } while (last.value != ivec2(1,1));
-        path.push_back(last.value);
-        if (path.size() == n*m) {
-            paths.push_back(path);
-        }
-    }
-
-    for(const auto& path : paths) {
-        std::cout << "<";
-        for(int i = path.size()-1; i >= 0; --i) {
-            std::cout << "(" << path[i].x << "," << path[i].y << ")";
-        }
-        std::cout << ">" << std::endl;
-    }
+    knight(ivec2(0,0), 0);
 }
