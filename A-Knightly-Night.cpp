@@ -59,6 +59,7 @@ unsigned int n;
 unsigned int m;
 unsigned int** board;
 ivec2* path;
+unsigned int path_count = 0;
 
 inline bool inBounds(ivec2 step) {
     return (step.x >= 0 && step.x < n && step.y >= 0 && step.y < m);
@@ -77,6 +78,7 @@ void knight(ivec2 pos, int depth) {
             std::cout << "(" << path[i].x+1 << "," << path[i].y+1 << ")";
         }
         std::cout << ">" << std::endl;
+        path_count++;
     }
     for(const auto& delta : deltas) {
         ivec2 next = pos+delta;
